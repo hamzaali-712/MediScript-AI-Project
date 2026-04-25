@@ -1,68 +1,62 @@
--- ============================================================
--- MediScript AI — Supabase PostgreSQL Schema
--- Run this ONCE in Supabase Dashboard → SQL Editor → New Query → RUN
--- HackData V1 | GDGoC CUI Wah
--- ============================================================
+-- ─────────────────────────────────────────────────────
+--  MediScript AI — Supabase Database Schema
+--  Run this in: Supabase Dashboard → SQL Editor → Run
+-- ─────────────────────────────────────────────────────
 
--- 1. USERS TABLE (login/signup)
+-- 1. Users
 CREATE TABLE IF NOT EXISTS users (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    email TEXT UNIQUE NOT NULL,
-    username TEXT UNIQUE NOT NULL,
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email         TEXT UNIQUE NOT NULL,
+    username      TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    full_name TEXT,
-    role TEXT DEFAULT 'patient',   -- patient | admin
-    is_active BOOLEAN DEFAULT TRUE,
-    last_login TIMESTAMPTZ
+    full_name     TEXT DEFAULT '',
+    created_at    TIMESTAMPTZ DEFAULT NOW(),
+    last_login    TIMESTAMPTZ
 );
 
--- 2. SCANS TABLE (every prescription analyzed)
+-- 2. Prescription Scans
 CREATE TABLE IF NOT EXISTS scans (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    drug_list TEXT,          -- JSON: [{name, dosage, frequency, duration, route, instructions}]
-    interactions TEXT,       -- JSON: [{drug1, drug2, severity, description, source}]
-    explanation_en TEXT,     -- English explanation from Gemini
-    explanation_ur TEXT,     -- Roman Urdu explanation from Gemini
-    warnings TEXT,           -- JSON: ['warning1', 'warning2']
-    tips TEXT,               -- JSON: ['tip1', 'tip2']
-    summary TEXT,            -- One-sentence summary
-    recommendations TEXT,    -- JSON: medicine recommendations from AI
-    double_check TEXT,       -- JSON: double-check results
-    drug_count INT DEFAULT 0,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID REFERENCES users(id) ON DELETE SET NULL,
+    drug_list       JSONB,
+    interactions    JSONB,
+    explanation_en  TEXT,
+    explanation_ur  TEXT,
+    warnings        JSONB,
+    tips            JSONB,
+    summary         TEXT,
+    recommendations JSONB,
+    double_check    JSONB,
+    drug_count      INT DEFAULT 0,
     has_interaction BOOLEAN DEFAULT FALSE,
-    report_generated BOOLEAN DEFAULT FALSE
+    created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. DRUG ANALYTICS TABLE
+-- 3. Drug Analytics
 CREATE TABLE IF NOT EXISTS drug_analytics (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    drug_name TEXT UNIQUE NOT NULL,
-    scan_count INT DEFAULT 1,
-    interaction_count INT DEFAULT 0,
-    severity_avg FLOAT DEFAULT 0,
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    drug_name  TEXT UNIQUE NOT NULL,
+    scan_count INT DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. USER ACTIVITY LOG
+-- 4. User Activity Log
 CREATE TABLE IF NOT EXISTS user_activity (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    action TEXT,   -- 'login', 'scan', 'report_download', 'logout'
-    details TEXT   -- JSON details
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id    UUID REFERENCES users(id) ON DELETE CASCADE,
+    action     TEXT NOT NULL,
+    details    JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Enable Row Level Security
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE scans ENABLE ROW LEVEL SECURITY;
-ALTER TABLE drug_analytics ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_activity ENABLE ROW LEVEL SECURITY;
+-- ── Indexes for performance ───────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_scans_user_id    ON scans(user_id);
+CREATE INDEX IF NOT EXISTS idx_scans_created_at ON scans(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activity_user_id ON user_activity(user_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_count  ON drug_analytics(scan_count DESC);
 
--- Allow all operations for hackathon (tighten in production)
-CREATE POLICY IF NOT EXISTS allow_all_users ON users FOR ALL USING (true);
-CREATE POLICY IF NOT EXISTS allow_all_scans ON scans FOR ALL USING (true);
-CREATE POLICY IF NOT EXISTS allow_all_analytics ON drug_analytics FOR ALL USING (true);
-CREATE POLICY IF NOT EXISTS allow_all_activity ON user_activity FOR ALL USING (true);
+-- ── Row Level Security (RLS) — enable for production ────
+-- ALTER TABLE users        ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE scans        ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE user_activity ENABLE ROW LEVEL SECURITY;
