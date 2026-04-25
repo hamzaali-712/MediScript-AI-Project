@@ -1,5 +1,3 @@
-# MediScript-AI-Project
-MediScript AI is an AI-powered system designed to analyze medical prescriptions by reading uploaded photos, extracting drug information, checking for interactions across over 500,000 records, and providing bilingual explanations.
 # 💊 MediScript AI
 ### Pakistan's First AI Prescription Analyzer
 > **HackData V1 | GDGoC CUI Wah | April 2026**
@@ -7,24 +5,24 @@ MediScript AI is an AI-powered system designed to analyze medical prescriptions 
 ---
 
 ## 🚀 Live Demo
-- **Frontend:** [your-app.streamlit.app](https://your-app.streamlit.app)
-- **Backend API:** [mediscript-backend.onrender.com/health](https://mediscript-backend.onrender.com/health)
-- **API Docs:** [mediscript-backend.onrender.com/docs](https://mediscript-backend.onrender.com/docs)
+- **Frontend:** Deploy on [Streamlit Cloud](https://share.streamlit.io) — free
+- **Backend API:** Deploy on [Render.com](https://render.com) — free
+- **API Docs:** `https://your-backend.onrender.com/docs`
 
 ---
 
 ## 🎯 Problem
 70%+ of Pakistani patients **cannot understand** their own prescriptions:
 - Handwritten Latin abbreviations (BID, TID, PRN, SOS)
-- No bilingual explanation tools
+- No bilingual explanation available
 - Dangerous drug-drug interactions go undetected
-- 7,000+ deaths/year from medication errors (WHO)
+- 7,000+ deaths/year from medication errors (WHO estimate)
 
 ## ✅ Solution
 MediScript AI automatically:
-1. **Reads** any prescription photo using Google Gemini Vision (Anti-Gravity)
+1. **Reads** any prescription photo via Google Gemini Vision
 2. **Checks** 500K+ FDA drug interactions via live government APIs
-3. **Explains** everything in both **English** AND **Roman Urdu**
+3. **Explains** everything in **English + Roman Urdu**
 4. **Recommends** safer alternatives and lifestyle tips
 5. **Generates** a downloadable PDF report
 
@@ -32,18 +30,19 @@ MediScript AI automatically:
 
 ## 🏗️ Tech Stack (100% FREE — PKR 0)
 
-| Layer | Technology |
-|---|---|
-| AI Vision | Google Gemini 1.5 Flash (Anti-Gravity) |
-| Drug Interactions | OpenFDA FAERS API (500K+ records) |
-| Drug Normalization | NLM RxNorm API (NIH) |
-| Backend | FastAPI + Python + Uvicorn |
-| Frontend | Streamlit (Python only) |
-| Database | Supabase PostgreSQL |
-| PDF Reports | ReportLab |
-| Backend Hosting | Render.com |
-| Frontend Hosting | Streamlit Community Cloud |
-| CI/CD | GitHub Actions |
+| Layer | Technology | Cost |
+|---|---|---|
+| AI Vision | Google Gemini 1.5 Flash | FREE |
+| Drug Interactions | OpenFDA FAERS API (500K+ records) | FREE |
+| Drug Normalization | NLM RxNorm API (NIH) | FREE |
+| Drug Labels | DailyMed (NIH) | FREE |
+| Backend | FastAPI + Python + Uvicorn | FREE |
+| Frontend | Streamlit | FREE |
+| Database | Supabase PostgreSQL | FREE |
+| PDF Reports | ReportLab | FREE |
+| Backend Hosting | Render.com | FREE |
+| Frontend Hosting | Streamlit Community Cloud | FREE |
+| **Total** | **PKR 0** | **100% FREE** |
 
 ---
 
@@ -52,65 +51,137 @@ MediScript AI automatically:
 ```
 mediscript-ai/
 ├── backend/
-│   ├── main.py              # FastAPI server (all routes)
-│   ├── gemini_service.py    # Gemini AI calls (Anti-Gravity)
-│   ├── drug_checker.py      # Live FDA/NIH API interaction checker
-│   └── supabase_client.py   # Database operations
-├── frontend/
-│   └── app.py               # Complete Streamlit UI
+│   ├── __init__.py
+│   ├── main.py              # FastAPI server + all routes
+│   ├── gemini_service.py    # Gemini Vision AI calls
+│   ├── drug_checker.py      # OpenFDA + RxNorm + DailyMed
+│   └── supabase_client.py   # All database operations
 ├── utils/
+│   ├── __init__.py
 │   ├── image_processor.py   # PIL image enhancement
-│   └── report_generator.py  # PDF generation
+│   └── report_generator.py  # ReportLab PDF generation
 ├── database/
 │   └── schema.sql           # Supabase table definitions
-├── .env.example             # Environment variable template
-├── requirements.txt         # Python dependencies
-└── Procfile                 # Render deployment config
+├── tests/
+│   └── test_apis.py         # API health tests
+├── .streamlit/
+│   ├── config.toml          # Streamlit theme config
+│   └── secrets.toml.example # Secrets template
+├── app.py                   # Streamlit frontend
+├── .env.example             # Environment variables template
+├── .gitignore
+├── Procfile                 # Render deployment
+└── requirements.txt
 ```
 
 ---
 
-## ⚡ Quick Start
+## ⚡ Quick Start (Local)
 
 ```bash
 # 1. Clone
-git clone https://github.com/hamzaali-712/MediScript-AI-Project.git
+git clone https://github.com/YOUR_USERNAME/MediScript-AI-Project.git
 cd MediScript-AI-Project
 
-# 2. Install dependencies
+# 2. Create virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate        # Linux/Mac
+# venv\Scripts\activate         # Windows
+
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# 3. Set up environment
+# 4. Set up environment
 cp .env.example .env
-# Edit .env and add your Gemini API key and Supabase credentials
+# Edit .env and add your API keys (see below)
 
-# 4. Run backend
+# 5. Set up Supabase database
+# → Go to supabase.com → New Project
+# → SQL Editor → Paste contents of database/schema.sql → Run
+
+# 6. Run backend (Terminal 1)
 uvicorn backend.main:app --reload --port 8000
 
-# 5. Run frontend (new terminal)
-streamlit run frontend/app.py
+# 7. Run frontend (Terminal 2)
+streamlit run app.py
+
+# 8. Open browser
+# Frontend: http://localhost:8501
+# Backend API docs: http://localhost:8000/docs
 ```
 
 ---
 
 ## 🔑 Getting API Keys (All Free)
 
-| Service | URL | Time |
+| Service | Steps | Time |
 |---|---|---|
-| Gemini API Key | [aistudio.google.com](https://aistudio.google.com) | 2 min |
-| Supabase | [supabase.com](https://supabase.com) | 5 min |
-| Render (deploy) | [render.com](https://render.com) | 3 min |
-| Streamlit Cloud | [share.streamlit.io](https://share.streamlit.io) | 2 min |
+| **Gemini API Key** | Go to [aistudio.google.com](https://aistudio.google.com) → Get API Key | 2 min |
+| **Supabase** | Go to [supabase.com](https://supabase.com) → New Project → Get URL + Key | 5 min |
+| **OpenFDA** (optional) | [open.fda.gov/apis](https://open.fda.gov/apis/authentication/) | 2 min |
+
+---
+
+## 🌐 Deployment Guide
+
+### Backend → Render.com (Free)
+1. Push code to GitHub
+2. Go to [render.com](https://render.com) → New Web Service
+3. Connect your GitHub repo
+4. **Build Command:** `pip install -r requirements.txt`
+5. **Start Command:** `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+6. Add Environment Variables (from your `.env`):
+   - `GEMINI_API_KEY`
+   - `SUPABASE_URL`
+   - `SUPABASE_KEY`
+   - `APP_ENV=production`
+   - `ALLOWED_ORIGINS=https://your-app.streamlit.app`
+7. Deploy! Get your URL: `https://mediscript-backend.onrender.com`
+
+### Frontend → Streamlit Cloud (Free)
+1. Push code to GitHub
+2. Go to [share.streamlit.io](https://share.streamlit.io)
+3. Connect repo → Set **Main file:** `app.py`
+4. Add Secret in Streamlit settings:
+   ```
+   BACKEND_URL = "https://mediscript-backend.onrender.com"
+   ```
+5. Deploy! Get your URL: `https://mediscript.streamlit.app`
+
+---
+
+## 🔧 API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/health` | Health check |
+| POST | `/auth/signup` | Register user |
+| POST | `/auth/login` | Login user |
+| GET | `/user/{id}` | Get user profile |
+| **POST** | **`/analyze`** | **Main: analyze prescription** |
+| GET | `/history` | Scan history |
+| GET | `/scan/{id}` | Get specific scan |
+| GET | `/analytics` | Drug analytics |
+| GET | `/dashboard` | Dashboard stats |
+| GET | `/drug-info/{name}` | Live drug info |
+
+---
+
+## 🧪 Test APIs
+
+```bash
+python tests/test_apis.py
+```
 
 ---
 
 ## 👥 Team
 
-| Name | Role |
+| Role | Name |
 |---|---|
-| **Hamza Ali** | Project Idea & Lead |
-| **Muhammad Umair Malik** | 
-| **Shahzaib Shoaib Rathore** | 
+| 💡 Project Idea & Lead | **Hamza Ali** |
+| 👨‍💻 | **Muhammad Umair Malik** |
+| 👨‍💻 | **Shahzaib Shoaib Rathore** |
 
 ---
 
@@ -118,8 +189,8 @@ streamlit run frontend/app.py
 - 220M+ Urdu speakers can now understand their prescriptions
 - 500,000+ FDA drug interaction records checked in real-time
 - First bilingual (English + Roman Urdu) medical AI in Pakistan
-- Zero cost to run — accessible for all
+- Zero infrastructure cost
 
 ---
 
-> *"Ab aapka nuskhaa samjhna asaan hai" — Now understanding your prescription is easy* 💊
+> *"Ab aapka nuskhaa samjhna asaan hai"* — Now understanding your prescription is easy 💊
