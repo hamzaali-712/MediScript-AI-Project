@@ -985,7 +985,4 @@ def main():
         show_auth_page()
 
 
-if __name__ == "__main__":
-    main()
-
-main()
+main()  # ✅ Single call — fixes StreamlitDuplicateElementKey error
