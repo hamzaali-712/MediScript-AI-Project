@@ -6,6 +6,10 @@ Project Idea: Hamza Ali | Team: Muhammad Umair Malik | Shahzaib Shoaib Rathore
 """
 
 import streamlit as st
+import subprocess
+import threading
+import time
+import sys
 import requests
 import json
 import os
@@ -15,6 +19,23 @@ import plotly.express as px
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# ── Auto-start Backend ─────────────────────────────────────────────────────────
+def start_backend():
+    try:
+        subprocess.Popen(
+            [sys.executable, "-m", "uvicorn", "backend.main:app",
+             "--host", "0.0.0.0", "--port", "8000"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except Exception as e:
+        print(f"Backend start error: {e}")
+
+if "backend_started" not in st.session_state:
+    threading.Thread(target=start_backend, daemon=True).start()
+    time.sleep(3)
+    st.session_state["backend_started"] = True
 
 BACKEND = os.getenv("BACKEND_URL", "http://localhost:8000")
 
