@@ -524,13 +524,19 @@ def show_auth_page():
         with tab_signup:
             st.markdown("#### Create your account ✨")
 
-            su_name  = st.text_input("Full Name *", key="su_name",  placeholder="Enter your full name")
-            su_email = st.text_input("Email Address *", key="su_email", placeholder="you@example.com")
-            su_user  = st.text_input("Username *", key="su_user",  placeholder="Enter your username")
-            su_pass  = st.text_input("Password *", type="password", key="su_pass",
-                                     placeholder="Min 8 chars, uppercase, number")
-            su_pass2 = st.text_input("Confirm Password *", type="password", key="su_pass2",
-                                     placeholder="Repeat your password")
+            # Render inputs with keys — values stored in st.session_state automatically
+            st.text_input("Full Name *",        key="su_name",  placeholder="Enter your full name")
+            st.text_input("Email Address *",    key="su_email", placeholder="you@example.com")
+            st.text_input("Username *",         key="su_user",  placeholder="Enter your username")
+            st.text_input("Password *",         key="su_pass",  type="password", placeholder="Min 8 chars, A-Z, 0-9")
+            st.text_input("Confirm Password *", key="su_pass2", type="password", placeholder="Repeat your password")
+
+            # Always read from session_state — fixes Streamlit widget value loss on rerun
+            su_name  = st.session_state.get("su_name",  "").strip()
+            su_email = st.session_state.get("su_email", "").strip()
+            su_user  = st.session_state.get("su_user",  "").strip()
+            su_pass  = st.session_state.get("su_pass",  "")
+            su_pass2 = st.session_state.get("su_pass2", "")
 
             # Live password hint
             if su_pass:
@@ -544,6 +550,13 @@ def show_auth_page():
 
             if st.button("Create Account  →", type="primary", use_container_width=True, key="btn_signup"):
                 all_errors = []
+
+                # Re-read fresh from session_state at button-click time
+                su_name  = st.session_state.get("su_name",  "").strip()
+                su_email = st.session_state.get("su_email", "").strip()
+                su_user  = st.session_state.get("su_user",  "").strip()
+                su_pass  = st.session_state.get("su_pass",  "")
+                su_pass2 = st.session_state.get("su_pass2", "")
 
                 # Full name
                 ok, msg = validate_full_name(su_name)
