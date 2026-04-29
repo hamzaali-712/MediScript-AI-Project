@@ -598,18 +598,37 @@ def show_auth_page():
 
                             # Make backend errors user-friendly
                             friendly = raw_err
-                            raw_lower = raw_err.lower()
-                            if "email" in raw_lower and any(w in raw_lower for w in ["exist", "already", "unique", "registered", "duplicate", "taken"]):
+                            raw_lower = str(raw_err).lower()
+
+                            # ── Supabase table missing (PGRST205) ──
+                            if "pgrst205" in raw_lower or "schema cache" in raw_lower or "could not find the table" in raw_lower:
+                                friendly = (
+                                    "⚠️ Database tables not set up yet!\n\n"
+                                    "**Fix:** Go to your Supabase Dashboard → SQL Editor → "
+                                    "paste and run the schema from `database/schema.sql` file."
+                                )
+                                st.error(friendly)
+                                st.info("📋 **Quick fix steps:**\n"
+                                        "1. Open supabase.com → your project\n"
+                                        "2. Click **SQL Editor** in left menu\n"
+                                        "3. Click **New Query**\n"
+                                        "4. Paste contents of `database/schema.sql`\n"
+                                        "5. Click **Run** ✅")
+                            elif "email" in raw_lower and any(w in raw_lower for w in ["exist", "already", "unique", "registered", "duplicate", "taken"]):
                                 friendly = "This email is already registered. Please login or use a different email."
+                                st.error(f"❌ {friendly}")
                             elif "username" in raw_lower and any(w in raw_lower for w in ["exist", "already", "unique", "taken", "duplicate"]):
                                 friendly = "This username is already taken. Please choose a different one."
+                                st.error(f"❌ {friendly}")
                             elif "password" in raw_lower and "weak" in raw_lower:
                                 friendly = "Password is too weak. Use min 8 chars with uppercase, lowercase and number."
+                                st.error(f"❌ {friendly}")
                             elif any(w in raw_lower for w in ["connection", "connect", "network"]):
                                 friendly = "Cannot reach the server. Please wait and try again."
+                                st.error(f"❌ {friendly}")
+                            else:
+                                st.error(f"❌ {friendly}")
 
-                            st.error(f"❌ {friendly}")
-                            # Show raw error in expander for debugging
                             with st.expander("🔍 Technical details"):
                                 st.code(f"Raw error: {raw_err}\nFull response: {result}")
 
