@@ -380,7 +380,7 @@ def validate_username(username: str) -> tuple[bool, str]:
 
 
 def validate_full_name(name: str) -> tuple[bool, str]:
-    """Validate full name."""
+    """Validate full name — relaxed to allow any reasonable name."""
     name = name.strip()
     if not name:
         return False, "Full name is required."
@@ -388,8 +388,6 @@ def validate_full_name(name: str) -> tuple[bool, str]:
         return False, "Name is too short."
     if len(name) > 80:
         return False, "Name is too long (max 80 characters)."
-    if not re.match(r'^[a-zA-Z\s\.\-]+$', name):
-        return False, "Name can only contain letters, spaces, dots, and hyphens."
     return True, ""
 
 
@@ -425,13 +423,35 @@ def backend_get(endpoint: str, params: dict = None) -> dict:
 def backend_post(endpoint: str, json_data: dict = None) -> dict:
     try:
         r = requests.post(f"{BACKEND}{endpoint}", json=json_data, timeout=15)
-        return r.json()
+        try:
+            data = r.json()
+        except Exception:
+            data = {}
+
+        # Handle HTTP error codes (400, 422, 500 etc.)
+        if r.status_code not in (200, 201):
+            detail = data.get("detail", "")
+            if isinstance(detail, list) and detail:
+                # FastAPI/Pydantic validation error list
+                msg = detail[0].get("msg", str(detail[0]))
+            elif isinstance(detail, str) and detail:
+                msg = detail
+            else:
+                msg = data.get("error", data.get("message",
+                      f"Server error (HTTP {r.status_code}). Please try again."))
+            return {"success": False, "error": msg}
+
+        # Backend explicitly returned success=False
+        if not data.get("success", True):
+            return {"success": False,
+                    "error": data.get("error", data.get("detail", "Request failed. Please try again."))}
+
+        return data
+
     except requests.exceptions.ConnectionError:
-        return {"success": False, "error": "Cannot connect to backend server. Please wait a moment and try again."}
+        return {"success": False, "error": "Cannot connect to backend. Please wait and try again."}
     except requests.exceptions.Timeout:
         return {"success": False, "error": "Request timed out. Please try again."}
-    except requests.exceptions.JSONDecodeError:
-        return {"success": False, "error": "Server returned an invalid response. Please try again."}
     except Exception as e:
         return {"success": False, "error": f"Unexpected error: {str(e)}"}
 
@@ -578,16 +598,20 @@ def show_auth_page():
 
                             # Make backend errors user-friendly
                             friendly = raw_err
-                            if "email" in raw_err.lower() and ("exist" in raw_err.lower() or "already" in raw_err.lower() or "unique" in raw_err.lower()):
+                            raw_lower = raw_err.lower()
+                            if "email" in raw_lower and any(w in raw_lower for w in ["exist", "already", "unique", "registered", "duplicate", "taken"]):
                                 friendly = "This email is already registered. Please login or use a different email."
-                            elif "username" in raw_err.lower() and ("exist" in raw_err.lower() or "already" in raw_err.lower() or "unique" in raw_err.lower()):
+                            elif "username" in raw_lower and any(w in raw_lower for w in ["exist", "already", "unique", "taken", "duplicate"]):
                                 friendly = "This username is already taken. Please choose a different one."
-                            elif "password" in raw_err.lower():
-                                friendly = f"Password issue: {raw_err}"
-                            elif "connection" in raw_err.lower() or "connect" in raw_err.lower():
-                                friendly = "Cannot reach the server. Please wait a moment and try again."
+                            elif "password" in raw_lower and "weak" in raw_lower:
+                                friendly = "Password is too weak. Use min 8 chars with uppercase, lowercase and number."
+                            elif any(w in raw_lower for w in ["connection", "connect", "network"]):
+                                friendly = "Cannot reach the server. Please wait and try again."
 
-                            st.markdown(f'<div class="val-error">❌ {friendly}</div>', unsafe_allow_html=True)
+                            st.error(f"❌ {friendly}")
+                            # Show raw error in expander for debugging
+                            with st.expander("🔍 Technical details"):
+                                st.code(f"Raw error: {raw_err}\nFull response: {result}")
 
                     except Exception as e:
                         st.markdown(
